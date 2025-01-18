@@ -16,13 +16,23 @@
       "supportsTablet": true
     },
     "android": {
+      "sound": true,
+      "notifications": {
+        "sound": "mixkit-melodical-flute-music-notification-2310.wav"
+      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.kokohamada.prayertimesapp"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "1e43b21c-819f-48f4-bbb3-146adc38d874"
+      }
     }
   }
 }

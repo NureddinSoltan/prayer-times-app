@@ -16,6 +16,14 @@
       "supportsTablet": true
     },
     "android": {
+      "buildProperties": {
+        "gradle": {
+          "properties": {
+            "android.useAndroidX": "true",
+            "android.enableJetifier": "true"
+          }
+        }
+      },
       "sound": true,
       "notifications": {
         "sound": "mixkit-melodical-flute-music-notification-2310.wav"

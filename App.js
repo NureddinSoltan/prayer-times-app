@@ -474,6 +474,213 @@
 
 // Without testing function
 
+// import React, { useState, useEffect } from 'react';
+// import { StyleSheet, Text, View, TextInput, Button, FlatList, Alert } from 'react-native';
+// import axios from 'axios';
+// import AsyncStorage from '@react-native-async-storage/async-storage';
+// import * as Notifications from 'expo-notifications';
+
+// // Configure notifications to display while the app is in the foreground
+// Notifications.setNotificationHandler({
+//   handleNotification: async () => ({
+//     shouldShowAlert: true,
+//     shouldPlaySound: true,
+//     shouldSetBadge: false,
+//   }),
+// });
+
+// export default function App() {
+//   const [prayerTimes, setPrayerTimes] = useState({});
+//   const [selectedPrayer, setSelectedPrayer] = useState(null);
+//   const [delay, setDelay] = useState('');
+//   const [delays, setDelays] = useState({});
+//   const [error, setError] = useState(null);
+
+//   useEffect(() => {
+//     fetchPrayerTimes();
+//     loadDelays();
+//   }, []);
+
+//   const loadDelays = async () => {
+//     try {
+//       const storedDelays = await AsyncStorage.getItem('prayerDelays');
+//       if (storedDelays) {
+//         setDelays(JSON.parse(storedDelays));
+//       }
+//     } catch (err) {
+//       console.error('Failed to load delays:', err);
+//     }
+//   };
+
+//   const saveDelays = async (newDelays) => {
+//     try {
+//       await AsyncStorage.setItem('prayerDelays', JSON.stringify(newDelays));
+//     } catch (err) {
+//       console.error('Failed to save delays:', err);
+//     }
+//   };
+
+//   const fetchPrayerTimes = async () => {
+//     try {
+//       const response = await axios.get('https://api.aladhan.com/v1/timingsByCity', {
+//         params: {
+//           city: '41.021988',
+//           country: '28.660188',
+//           method: 13, // Calculation method (adjust as needed)
+//         },
+//       });
+//       setPrayerTimes(response.data.data.timings);
+//     } catch (err) {
+//       setError('Failed to fetch prayer times. Please try again.');
+//       console.error(err);
+//     }
+//   };
+
+//   const setPrayerDelay = async () => {
+//     if (!selectedPrayer || !delay) {
+//       Alert.alert('Error', 'Please select a prayer and enter a delay.');
+//       return;
+//     }
+
+//     const newDelays = { ...delays, [selectedPrayer]: parseInt(delay, 10) };
+//     setDelays(newDelays);
+//     await saveDelays(newDelays);
+
+//     Alert.alert('Delay Saved', `Delay for ${selectedPrayer} set to ${delay} minutes.`);
+//   };
+
+//   const scheduleNotifications = async () => {
+//     const hasPermission = await Notifications.getPermissionsAsync();
+//     if (hasPermission.status !== 'granted') {
+//       await Notifications.requestPermissionsAsync();
+//     }
+
+//     Object.entries(prayerTimes).forEach(async ([prayer, time]) => {
+//       const prayerDelay = delays[prayer] || 0;
+//       const [hours, minutes] = time.split(':').map(Number);
+//       const notificationTime = new Date();
+//       notificationTime.setHours(hours, minutes, 0, 0);
+//       notificationTime.setMinutes(notificationTime.getMinutes() + prayerDelay);
+
+//       if (notificationTime > new Date()) {
+//         await Notifications.scheduleNotificationAsync({
+//           content: {
+//             title: `Time for ${prayer}`,
+//             body: `This is your notification for ${prayer} prayer.`,
+//             sound: true,
+//           },
+//           trigger: notificationTime,
+//         });
+//         console.log(`Scheduled notification for ${prayer} at ${notificationTime}`);
+//       }
+//     });
+
+//     Alert.alert('Notifications Scheduled', 'Notifications have been scheduled for all prayers.');
+//   };
+
+//   return (
+//     <View style={styles.container}>
+//       <Text style={styles.header}>Prayer Times</Text>
+//       {error ? (
+//         <Text style={styles.error}>{error}</Text>
+//       ) : (
+//         <>
+//           <FlatList
+//             data={Object.entries(prayerTimes)}
+//             keyExtractor={(item) => item[0]}
+//             renderItem={({ item }) => (
+//               <Text
+//                 style={[
+//                   styles.item,
+//                   selectedPrayer === item[0] && styles.selectedItem,
+//                 ]}
+//                 onPress={() => setSelectedPrayer(item[0])}
+//               >
+//                 {item[0]}: {item[1]} (Delay: {delays[item[0]] || 0} min)
+//               </Text>
+//             )}
+//           />
+//           <TextInput
+//             style={styles.input}
+//             placeholder="Enter delay in minutes"
+//             value={delay}
+//             onChangeText={setDelay}
+//             keyboardType="numeric"
+//           />
+//           <Button title="Set Delay" onPress={setPrayerDelay} />
+//           <Button title="Schedule Notifications" onPress={scheduleNotifications} />
+//         </>
+//       )}
+//     </View>
+//   );
+// }
+
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     padding: 20,
+//     backgroundColor: '#f0f4f8',
+//   },
+//   header: {
+//     fontSize: 28,
+//     fontWeight: 'bold',
+//     marginBottom: 20,
+//     textAlign: 'center',
+//     color: '#34495e',
+//   },
+//   item: {
+//     fontSize: 18,
+//     marginVertical: 8,
+//     padding: 12,
+//     borderRadius: 8,
+//     borderWidth: 1,
+//     borderColor: '#dcdfe6',
+//     backgroundColor: '#ffffff',
+//     textAlign: 'center',
+//     shadowColor: '#000',
+//     shadowOffset: { width: 0, height: 1 },
+//     shadowOpacity: 0.1,
+//     shadowRadius: 4,
+//     elevation: 2,
+//   },
+//   selectedItem: {
+//     backgroundColor: '#e3f2fd',
+//     borderColor: '#2196f3',
+//   },
+//   input: {
+//     width: '100%',
+//     height: 45,
+//     borderColor: '#dcdfe6',
+//     borderWidth: 1,
+//     borderRadius: 8,
+//     paddingHorizontal: 12,
+//     marginVertical: 12,
+//     backgroundColor: '#ffffff',
+//     fontSize: 16,
+//   },
+//   error: {
+//     color: '#e74c3c',
+//     fontSize: 16,
+//     marginBottom: 10,
+//     textAlign: 'center',
+//   },
+// });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Fixing a bug wth chatgpt
+
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, Button, FlatList, Alert } from 'react-native';
 import axios from 'axios';
@@ -550,18 +757,34 @@ export default function App() {
   };
 
   const scheduleNotifications = async () => {
+    // Clear all existing notifications
+    await Notifications.cancelAllScheduledNotificationsAsync();
+    console.log('All scheduled notifications have been cleared.');
+  
     const hasPermission = await Notifications.getPermissionsAsync();
     if (hasPermission.status !== 'granted') {
       await Notifications.requestPermissionsAsync();
     }
-
-    Object.entries(prayerTimes).forEach(async ([prayer, time]) => {
+  
+    // Filter prayers to schedule only specific ones
+    const selectedPrayers = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+    const filteredPrayers = Object.entries(prayerTimes).filter(([prayer]) =>
+      selectedPrayers.includes(prayer)
+    );
+  
+    for (const [prayer, time] of filteredPrayers) {
       const prayerDelay = delays[prayer] || 0;
       const [hours, minutes] = time.split(':').map(Number);
+  
+      if (isNaN(hours) || isNaN(minutes)) {
+        console.error(`Invalid time format for ${prayer}: ${time}`);
+        continue;
+      }
+  
       const notificationTime = new Date();
       notificationTime.setHours(hours, minutes, 0, 0);
       notificationTime.setMinutes(notificationTime.getMinutes() + prayerDelay);
-
+  
       if (notificationTime > new Date()) {
         await Notifications.scheduleNotificationAsync({
           content: {
@@ -573,11 +796,12 @@ export default function App() {
         });
         console.log(`Scheduled notification for ${prayer} at ${notificationTime}`);
       }
-    });
-
-    Alert.alert('Notifications Scheduled', 'Notifications have been scheduled for all prayers.');
+    }
+  
+    Alert.alert('Notifications Scheduled', 'Notifications have been scheduled for selected prayers.');
   };
 
+  
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Prayer Times</Text>
@@ -671,9 +895,460 @@ const styles = StyleSheet.create({
 
 
 
+// Fixing bug with bolt:
+// import React, { useState, useEffect } from 'react';
+// import { StyleSheet, Text, View, TextInput, Button, FlatList, Alert, ScrollView, Switch } from 'react-native';
+// import axios from 'axios';
+// import AsyncStorage from '@react-native-async-storage/async-storage';
+// import * as Notifications from 'expo-notifications';
 
+// // Configure notifications to display while the app is in the foreground
+// Notifications.setNotificationHandler({
+//   handleNotification: async () => ({
+//     shouldShowAlert: true,
+//     shouldPlaySound: true,
+//     shouldSetBadge: false,
+//   }),
+// });
 
+// export default function App() {
+//   const [prayerTimes, setPrayerTimes] = useState({});
+//   const [testTimes, setTestTimes] = useState({});
+//   const [selectedPrayer, setSelectedPrayer] = useState(null);
+//   const [delay, setDelay] = useState('');
+//   const [delays, setDelays] = useState({});
+//   const [error, setError] = useState(null);
+//   const [testMode, setTestMode] = useState(false);
+//   const [debugInfo, setDebugInfo] = useState({
+//     currentTime: new Date().toLocaleTimeString(),
+//     notificationStatus: 'unknown',
+//     scheduledNotifications: [],
+//     nextNotification: null,
+//   });
 
+//   useEffect(() => {
+//     fetchPrayerTimes();
+//     loadDelays();
+//     loadTestTimes();
+//     checkNotificationPermissions();
+    
+//     // Update current time every second
+//     const timer = setInterval(() => {
+//       updateDebugInfo();
+//     }, 1000);
+
+//     return () => clearInterval(timer);
+//   }, []);
+
+//   const loadTestTimes = async () => {
+//     try {
+//       const stored = await AsyncStorage.getItem('testTimes');
+//       if (stored) {
+//         setTestTimes(JSON.parse(stored));
+//       }
+//     } catch (err) {
+//       console.error('Failed to load test times:', err);
+//     }
+//   };
+
+//   const saveTestTimes = async (newTestTimes) => {
+//     try {
+//       await AsyncStorage.setItem('testTimes', JSON.stringify(newTestTimes));
+//     } catch (err) {
+//       console.error('Failed to save test times:', err);
+//     }
+//   };
+
+//   const updateDebugInfo = async () => {
+//     const now = new Date();
+//     const currentTime = now.getHours() * 60 + now.getMinutes();
+    
+//     const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
+    
+//     let nextNotification = null;
+//     const times = testMode ? testTimes : prayerTimes;
+    
+//     if (times && delays) {
+//       const notifications = Object.entries(times)
+//         .map(([prayer, time]) => {
+//           const [hours, minutes] = time.split(':').map(Number);
+//           const prayerTime = hours * 60 + minutes;
+//           const delay = delays[prayer] || 0;
+//           const notificationTime = prayerTime + delay;
+//           return {
+//             prayer,
+//             notificationTime,
+//             timeUntil: notificationTime - currentTime
+//           };
+//         })
+//         .filter(n => n.timeUntil > 0)
+//         .sort((a, b) => a.timeUntil - b.timeUntil);
+
+//       nextNotification = notifications[0];
+//     }
+
+//     setDebugInfo({
+//       currentTime: now.toLocaleTimeString(),
+//       notificationStatus: (await Notifications.getPermissionsAsync()).status,
+//       scheduledNotifications: scheduledNotifications.map(n => ({
+//         title: n.content.title,
+//         trigger: n.trigger,
+//       })),
+//       nextNotification,
+//       testMode,
+//       activeTimeSet: testMode ? 'Test Times' : 'Real Times',
+//     });
+//   };
+
+//   const checkNotificationPermissions = async () => {
+//     const { status } = await Notifications.getPermissionsAsync();
+//     if (status !== 'granted') {
+//       const { status: newStatus } = await Notifications.requestPermissionsAsync();
+//       if (newStatus !== 'granted') {
+//         Alert.alert('Warning', 'Without notification permissions, you won\'t receive prayer time alerts.');
+//       }
+//     }
+//   };
+
+//   const loadDelays = async () => {
+//     try {
+//       const storedDelays = await AsyncStorage.getItem('prayerDelays');
+//       if (storedDelays) {
+//         setDelays(JSON.parse(storedDelays));
+//       }
+//     } catch (err) {
+//       console.error('Failed to load delays:', err);
+//     }
+//   };
+
+//   const saveDelays = async (newDelays) => {
+//     try {
+//       await AsyncStorage.setItem('prayerDelays', JSON.stringify(newDelays));
+//     } catch (err) {
+//       console.error('Failed to save delays:', err);
+//     }
+//   };
+
+//   const fetchPrayerTimes = async () => {
+//     try {
+//       const response = await axios.get('https://api.aladhan.com/v1/timingsByCity', {
+//         params: {
+//           city: '41.021988',
+//           country: '28.660188',
+//           method: 13,
+//         },
+//       });
+//       const times = response.data.data.timings;
+//       setPrayerTimes(times);
+//       // Initialize test times if they don't exist
+//       if (Object.keys(testTimes).length === 0) {
+//         setTestTimes(times);
+//         saveTestTimes(times);
+//       }
+//       updateDebugInfo();
+//     } catch (err) {
+//       setError('Failed to fetch prayer times. Please try again.');
+//       console.error(err);
+//     }
+//   };
+
+//   const handleTimeChange = (prayer: string, time: string) => {
+//     const newTestTimes = { ...testTimes, [prayer]: time };
+//     setTestTimes(newTestTimes);
+//     saveTestTimes(newTestTimes);
+//     updateDebugInfo();
+//   };
+
+//   const setPrayerDelay = async () => {
+//     if (!selectedPrayer || !delay) {
+//       Alert.alert('Error', 'Please select a prayer and enter a delay.');
+//       return;
+//     }
+
+//     const newDelays = { ...delays, [selectedPrayer]: parseInt(delay, 10) };
+//     setDelays(newDelays);
+//     await saveDelays(newDelays);
+//     await scheduleNotifications();
+//     updateDebugInfo();
+
+//     Alert.alert('Delay Saved', `Delay for ${selectedPrayer} set to ${delay} minutes.`);
+//   };
+
+//   const scheduleNotifications = async () => {
+//     try {
+//       await Notifications.cancelAllScheduledNotificationsAsync();
+//       console.log('All scheduled notifications have been cleared.');
+    
+//       const hasPermission = await Notifications.getPermissionsAsync();
+//       if (hasPermission.status !== 'granted') {
+//         const { status } = await Notifications.requestPermissionsAsync();
+//         if (status !== 'granted') {
+//           Alert.alert('Error', 'Notification permissions not granted');
+//           return;
+//         }
+//       }
+    
+//       const selectedPrayers = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+//       const times = testMode ? testTimes : prayerTimes;
+//       const filteredPrayers = Object.entries(times).filter(([prayer]) =>
+//         selectedPrayers.includes(prayer)
+//       );
+    
+//       for (const [prayer, time] of filteredPrayers) {
+//         const prayerDelay = delays[prayer] || 0;
+//         const [hours, minutes] = time.split(':').map(Number);
+    
+//         if (isNaN(hours) || isNaN(minutes)) {
+//           console.error(`Invalid time format for ${prayer}: ${time}`);
+//           continue;
+//         }
+    
+//         const notificationTime = new Date();
+//         notificationTime.setHours(hours, minutes, 0, 0);
+//         notificationTime.setMinutes(notificationTime.getMinutes() + prayerDelay);
+    
+//         if (notificationTime > new Date()) {
+//           await Notifications.scheduleNotificationAsync({
+//             content: {
+//               title: `Time for ${prayer}`,
+//               body: `This is your notification for ${prayer} prayer.`,
+//               sound: true,
+//             },
+//             trigger: {
+//               hour: notificationTime.getHours(),
+//               minute: notificationTime.getMinutes(),
+//               repeats: true,
+//             },
+//           });
+//         }
+//       }
+    
+//       updateDebugInfo();
+//       Alert.alert('Success', 'Notifications have been scheduled successfully');
+//     } catch (error) {
+//       console.error('Error scheduling notifications:', error);
+//       Alert.alert('Error', 'Failed to schedule notifications: ' + error.message);
+//     }
+//   };
+
+//   const renderDebugInfo = () => (
+//     <View style={styles.debugContainer}>
+//       <Text style={styles.debugHeader}>Debug Information</Text>
+//       <Text style={styles.debugText}>Current Time: {debugInfo.currentTime}</Text>
+//       <Text style={styles.debugText}>Mode: {testMode ? 'Test' : 'Real'}</Text>
+//       <Text style={styles.debugText}>Notification Permission: {debugInfo.notificationStatus}</Text>
+      
+//       <Text style={styles.debugSubHeader}>Next Notification:</Text>
+//       {debugInfo.nextNotification ? (
+//         <Text style={styles.debugText}>
+//           {debugInfo.nextNotification.prayer} in {Math.floor(debugInfo.nextNotification.timeUntil / 60)}h {debugInfo.nextNotification.timeUntil % 60}m
+//         </Text>
+//       ) : (
+//         <Text style={styles.debugText}>No upcoming notifications</Text>
+//       )}
+
+//       <Text style={styles.debugSubHeader}>Scheduled Notifications:</Text>
+//       {debugInfo.scheduledNotifications.map((notification, index) => (
+//         <Text key={index} style={styles.debugText}>
+//           {notification.title} - {JSON.stringify(notification.trigger)}
+//         </Text>
+//       ))}
+//     </View>
+//   );
+  
+//   return (
+//     <ScrollView style={styles.container}>
+//       <Text style={styles.header}>Prayer Times</Text>
+//       {error ? (
+//         <Text style={styles.error}>{error}</Text>
+//       ) : (
+//         <>
+//           <View style={styles.testModeContainer}>
+//             <Text style={styles.testModeText}>Test Mode</Text>
+//             <Switch
+//               value={testMode}
+//               onValueChange={(value) => {
+//                 setTestMode(value);
+//                 scheduleNotifications();
+//                 updateDebugInfo();
+//               }}
+//             />
+//           </View>
+
+//           <FlatList
+//             data={Object.entries(testMode ? testTimes : prayerTimes)}
+//             keyExtractor={(item) => item[0]}
+//             renderItem={({ item: [prayer, time] }) => (
+//               <View style={[styles.item, selectedPrayer === prayer && styles.selectedItem]}>
+//                 <Text
+//                   style={styles.prayerName}
+//                   onPress={() => setSelectedPrayer(prayer)}
+//                 >
+//                   {prayer}
+//                 </Text>
+//                 {testMode ? (
+//                   <TextInput
+//                     style={styles.timeInput}
+//                     value={time}
+//                     onChangeText={(newTime) => handleTimeChange(prayer, newTime)}
+//                     placeholder="HH:MM"
+//                   />
+//                 ) : (
+//                   <Text style={styles.timeText}>{time}</Text>
+//                 )}
+//                 <Text style={styles.delayText}>
+//                   Delay: {delays[prayer] || 0} min
+//                 </Text>
+//               </View>
+//             )}
+//             scrollEnabled={false}
+//           />
+
+//           <TextInput
+//             style={styles.input}
+//             placeholder="Enter delay in minutes"
+//             value={delay}
+//             onChangeText={setDelay}
+//             keyboardType="numeric"
+//           />
+
+//           <View style={styles.buttonContainer}>
+//             <Button title="Set Delay" onPress={setPrayerDelay} />
+//             <Button title="Schedule Notifications" onPress={scheduleNotifications} />
+//             <Button title="Refresh Times" onPress={fetchPrayerTimes} />
+//           </View>
+
+//           {renderDebugInfo()}
+//         </>
+//       )}
+//     </ScrollView>
+//   );
+// }
+
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     padding: 20,
+//     backgroundColor: '#f0f4f8',
+//   },
+//   header: {
+//     fontSize: 28,
+//     fontWeight: 'bold',
+//     marginBottom: 20,
+//     textAlign: 'center',
+//     color: '#34495e',
+//     marginTop: 40,
+//   },
+//   testModeContainer: {
+//     flexDirection: 'row',
+//     alignItems: 'center',
+//     justifyContent: 'space-between',
+//     marginBottom: 20,
+//     backgroundColor: '#fff',
+//     padding: 15,
+//     borderRadius: 8,
+//     shadowColor: '#000',
+//     shadowOffset: { width: 0, height: 1 },
+//     shadowOpacity: 0.1,
+//     shadowRadius: 4,
+//     elevation: 2,
+//   },
+//   testModeText: {
+//     fontSize: 16,
+//     fontWeight: '500',
+//     color: '#34495e',
+//   },
+//   item: {
+//     flexDirection: 'row',
+//     justifyContent: 'space-between',
+//     alignItems: 'center',
+//     marginVertical: 8,
+//     padding: 12,
+//     borderRadius: 8,
+//     borderWidth: 1,
+//     borderColor: '#dcdfe6',
+//     backgroundColor: '#ffffff',
+//     shadowColor: '#000',
+//     shadowOffset: { width: 0, height: 1 },
+//     shadowOpacity: 0.1,
+//     shadowRadius: 4,
+//     elevation: 2,
+//   },
+//   selectedItem: {
+//     backgroundColor: '#e3f2fd',
+//     borderColor: '#2196f3',
+//   },
+//   prayerName: {
+//     fontSize: 16,
+//     fontWeight: '500',
+//     flex: 1,
+//   },
+//   timeInput: {
+//     borderWidth: 1,
+//     borderColor: '#dcdfe6',
+//     borderRadius: 4,
+//     padding: 4,
+//     width: 80,
+//     textAlign: 'center',
+//     marginHorizontal: 10,
+//   },
+//   timeText: {
+//     fontSize: 16,
+//     marginHorizontal: 10,
+//   },
+//   delayText: {
+//     fontSize: 14,
+//     color: '#666',
+//     width: 80,
+//     textAlign: 'right',
+//   },
+//   input: {
+//     width: '100%',
+//     height: 45,
+//     borderColor: '#dcdfe6',
+//     borderWidth: 1,
+//     borderRadius: 8,
+//     paddingHorizontal: 12,
+//     marginVertical: 12,
+//     backgroundColor: '#ffffff',
+//     fontSize: 16,
+//   },
+//   error: {
+//     color: '#e74c3c',
+//     fontSize: 16,
+//     marginBottom: 10,
+//     textAlign: 'center',
+//   },
+//   buttonContainer: {
+//     gap: 10,
+//     marginBottom: 20,
+//   },
+//   debugContainer: {
+//     backgroundColor: '#1a1a1a',
+//     padding: 15,
+//     borderRadius: 8,
+//     marginTop: 20,
+//   },
+//   debugHeader: {
+//     color: '#00ff00',
+//     fontSize: 18,
+//     fontWeight: 'bold',
+//     marginBottom: 10,
+//   },
+//   debugSubHeader: {
+//     color: '#00ff00',
+//     fontSize: 16,
+//     fontWeight: 'bold',
+//     marginTop: 10,
+//     marginBottom: 5,
+//   },
+//   debugText: {
+//     color: '#ffffff',
+//     fontSize: 14,
+//     marginBottom: 5,
+//     fontFamily: 'monospace',
+//   },
+// });
 
 
 

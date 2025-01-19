@@ -6,37 +6,34 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "notification": {
+      "sound": "./assets/mixkit-melodical-flute-music-notification-2310.wav"  // Move sound file to assets
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.kokohamada.prayertimesapp",
+      "infoPlist": {
+        "UIBackgroundModes": ["fetch"]
+      }
     },
     "android": {
-      "buildProperties": {
-        "gradle": {
-          "properties": {
-            "android.useAndroidX": "true",
-            "android.enableJetifier": "true"
-          }
-        }
-      },
+      "package": "com.kokohamada.prayertimesapp",
+      "versionCode": 1,
       "sound": true,
-      "notifications": {
-        "sound": "mixkit-melodical-flute-music-notification-2310.wav"
-      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.kokohamada.prayertimesapp"
+      "notifications": {
+        "sound": "mixkit-melodical-flute-music-notification-2310.wav"
+      }
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
+    "assetBundlePatterns": ["**/*"],
     "extra": {
       "eas": {
         "projectId": "1e43b21c-819f-48f4-bbb3-146adc38d874"

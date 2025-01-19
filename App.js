@@ -230,6 +230,241 @@
 
 
 
+// Different design:
+
+// import React, { useState, useEffect } from 'react';
+// import { StyleSheet, Text, View, TextInput, Button, FlatList, Alert } from 'react-native';
+// import axios from 'axios';
+// import AsyncStorage from '@react-native-async-storage/async-storage';
+// import * as Notifications from 'expo-notifications';
+
+// // Configure notifications to display while the app is in the foreground
+// Notifications.setNotificationHandler({
+//   handleNotification: async () => ({
+//     shouldShowAlert: true,
+//     shouldPlaySound: true,
+//     shouldSetBadge: false,
+//   }),
+// });
+
+// export default function App() {
+//   const [prayerTimes, setPrayerTimes] = useState({});
+//   const [selectedPrayer, setSelectedPrayer] = useState(null);
+//   const [delay, setDelay] = useState('');
+//   const [delays, setDelays] = useState({});
+//   const [error, setError] = useState(null);
+//   const [isTesting, setIsTesting] = useState(false); // Toggle for testing mode
+//   const [editedTime, setEditedTime] = useState(''); // For editing prayer times
+
+//   useEffect(() => {
+//     fetchPrayerTimes();
+//     loadDelays();
+//   }, []);
+
+//   const loadDelays = async () => {
+//     try {
+//       const storedDelays = await AsyncStorage.getItem('prayerDelays');
+//       if (storedDelays) {
+//         setDelays(JSON.parse(storedDelays));
+//       }
+//     } catch (err) {
+//       console.error('Failed to load delays:', err);
+//     }
+//   };
+
+//   const saveDelays = async (newDelays) => {
+//     try {
+//       await AsyncStorage.setItem('prayerDelays', JSON.stringify(newDelays));
+//     } catch (err) {
+//       console.error('Failed to save delays:', err);
+//     }
+//   };
+
+//   const fetchPrayerTimes = async () => {
+//     try {
+//       const response = await axios.get('https://api.aladhan.com/v1/timingsByCity', {
+//         params: {
+//           city: '41.021988',
+//           country: '28.660188',
+//           // latitude: '41.021988',
+//           // longitude: '28.660188',
+//           // city: 'istanbul',
+//           // country: 'turkey',
+
+//           method: 13, // Calculation method (adjust as needed)
+//         },
+//       });
+//       setPrayerTimes(response.data.data.timings);
+//     } catch (err) {
+//       setError('Failed to fetch prayer times. Please try again.');
+//       console.error(err);
+//     }
+//   };
+
+//   const setPrayerDelay = async () => {
+//     if (!selectedPrayer || !delay) {
+//       Alert.alert('Error', 'Please select a prayer and enter a delay.');
+//       return;
+//     }
+
+//     const newDelays = { ...delays, [selectedPrayer]: parseInt(delay, 10) };
+//     setDelays(newDelays);
+//     await saveDelays(newDelays);
+
+//     Alert.alert('Delay Saved', `Delay for ${selectedPrayer} set to ${delay} minutes.`);
+//   };
+
+//   const editPrayerTime = () => {
+//     if (!selectedPrayer || !editedTime.match(/^\d{2}:\d{2}$/)) {
+//       Alert.alert('Error', 'Please select a prayer and enter a valid time in HH:mm format.');
+//       return;
+//     }
+
+//     const newPrayerTimes = { ...prayerTimes, [selectedPrayer]: editedTime };
+//     setPrayerTimes(newPrayerTimes);
+
+//     Alert.alert('Prayer Time Updated', `${selectedPrayer} time set to ${editedTime}.`);
+//   };
+
+//   const scheduleNotifications = async () => {
+//     const hasPermission = await Notifications.getPermissionsAsync();
+//     if (hasPermission.status !== 'granted') {
+//       await Notifications.requestPermissionsAsync();
+//     }
+
+//     Object.entries(prayerTimes).forEach(async ([prayer, time]) => {
+//       const prayerDelay = delays[prayer] || 0;
+//       const [hours, minutes] = time.split(':').map(Number);
+//       const notificationTime = new Date();
+//       notificationTime.setHours(hours, minutes, 0, 0);
+//       notificationTime.setMinutes(notificationTime.getMinutes() + prayerDelay);
+
+//       if (notificationTime > new Date()) {
+//         await Notifications.scheduleNotificationAsync({
+//           content: {
+//             title: `Time for ${prayer}`,
+//             body: `This is your notification for ${prayer} prayer.`,
+//             sound: true,
+//           },
+//           trigger: notificationTime,
+//         });
+//         console.log(`Scheduled notification for ${prayer} at ${notificationTime}`);
+//       }
+//     });
+
+//     Alert.alert('Notifications Scheduled', 'Notifications have been scheduled for all prayers.');
+//   };
+
+//   return (
+//     <View style={styles.container}>
+//       <Text style={styles.header}>
+//         {isTesting ? 'Testing Mode: Edit Prayer Times' : 'Prayer Times'}
+//       </Text>
+//       <Button
+//         title={`Switch to ${isTesting ? 'Normal' : 'Testing'} Mode`}
+//         onPress={() => setIsTesting(!isTesting)}
+//       />
+//       {error ? (
+//         <Text style={styles.error}>{error}</Text>
+//       ) : (
+//         <>
+//           <FlatList
+//             data={Object.entries(prayerTimes)}
+//             keyExtractor={(item) => item[0]}
+//             renderItem={({ item }) => (
+//               <Text
+//                 style={[
+//                   styles.item,
+//                   selectedPrayer === item[0] && styles.selectedItem,
+//                 ]}
+//                 onPress={() => setSelectedPrayer(item[0])}
+//               >
+//                 {item[0]}: {item[1]} (Delay: {delays[item[0]] || 0} min)
+//               </Text>
+//             )}
+//           />
+//           {isTesting && (
+//             <>
+//               <TextInput
+//                 style={styles.input}
+//                 placeholder="Enter new time (HH:mm)"
+//                 value={editedTime}
+//                 onChangeText={setEditedTime}
+//                 keyboardType="numeric"
+//               />
+//               <Button title="Edit Prayer Time" onPress={editPrayerTime} />
+//             </>
+//           )}
+//           <TextInput
+//             style={styles.input}
+//             placeholder="Enter delay in minutes"
+//             value={delay}
+//             onChangeText={setDelay}
+//             keyboardType="numeric"
+//           />
+//           <Button title="Set Delay" onPress={setPrayerDelay} />
+//           <Button title="Schedule Notifications" onPress={scheduleNotifications} />
+//         </>
+//       )}
+//     </View>
+//   );
+// }
+
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     padding: 20,
+//     backgroundColor: '#f0f4f8', // Light background color for a modern look
+//   },
+//   header: {
+//     fontSize: 28,
+//     fontWeight: 'bold',
+//     marginBottom: 20,
+//     textAlign: 'center',
+//     color: '#34495e', // Dark blue-gray text color
+//   },
+//   item: {
+//     fontSize: 18,
+//     marginVertical: 8,
+//     padding: 12,
+//     borderRadius: 8,
+//     borderWidth: 1,
+//     borderColor: '#dcdfe6', // Light gray border
+//     backgroundColor: '#ffffff', // White background for items
+//     textAlign: 'center',
+//     shadowColor: '#000',
+//     shadowOffset: { width: 0, height: 1 },
+//     shadowOpacity: 0.1,
+//     shadowRadius: 4,
+//     elevation: 2, // Adds subtle elevation for Android
+//   },
+//   selectedItem: {
+//     backgroundColor: '#e3f2fd', // Light blue background for selected items
+//     borderColor: '#2196f3', // Blue border for selected items
+//   },
+//   input: {
+//     width: '100%',
+//     height: 45,
+//     borderColor: '#dcdfe6',
+//     borderWidth: 1,
+//     borderRadius: 8,
+//     paddingHorizontal: 12,
+//     marginVertical: 12,
+//     backgroundColor: '#ffffff', // White background for inputs
+//     fontSize: 16,
+//   },
+//   error: {
+//     color: '#e74c3c', // Red color for error messages
+//     fontSize: 16,
+//     marginBottom: 10,
+//     textAlign: 'center',
+//   },
+//   button: {
+//     marginVertical: 8,
+//     borderRadius: 8,
+//     overflow: 'hidden',
+//   },
+// });
 
 
 
@@ -237,12 +472,199 @@
 
 
 
+// Without testing function
 
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, TextInput, Button, FlatList, Alert } from 'react-native';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
 
+// Configure notifications to display while the app is in the foreground
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
+export default function App() {
+  const [prayerTimes, setPrayerTimes] = useState({});
+  const [selectedPrayer, setSelectedPrayer] = useState(null);
+  const [delay, setDelay] = useState('');
+  const [delays, setDelays] = useState({});
+  const [error, setError] = useState(null);
 
+  useEffect(() => {
+    fetchPrayerTimes();
+    loadDelays();
+  }, []);
 
+  const loadDelays = async () => {
+    try {
+      const storedDelays = await AsyncStorage.getItem('prayerDelays');
+      if (storedDelays) {
+        setDelays(JSON.parse(storedDelays));
+      }
+    } catch (err) {
+      console.error('Failed to load delays:', err);
+    }
+  };
 
+  const saveDelays = async (newDelays) => {
+    try {
+      await AsyncStorage.setItem('prayerDelays', JSON.stringify(newDelays));
+    } catch (err) {
+      console.error('Failed to save delays:', err);
+    }
+  };
+
+  const fetchPrayerTimes = async () => {
+    try {
+      const response = await axios.get('https://api.aladhan.com/v1/timingsByCity', {
+        params: {
+          city: '41.021988',
+          country: '28.660188',
+          method: 13, // Calculation method (adjust as needed)
+        },
+      });
+      setPrayerTimes(response.data.data.timings);
+    } catch (err) {
+      setError('Failed to fetch prayer times. Please try again.');
+      console.error(err);
+    }
+  };
+
+  const setPrayerDelay = async () => {
+    if (!selectedPrayer || !delay) {
+      Alert.alert('Error', 'Please select a prayer and enter a delay.');
+      return;
+    }
+
+    const newDelays = { ...delays, [selectedPrayer]: parseInt(delay, 10) };
+    setDelays(newDelays);
+    await saveDelays(newDelays);
+
+    Alert.alert('Delay Saved', `Delay for ${selectedPrayer} set to ${delay} minutes.`);
+  };
+
+  const scheduleNotifications = async () => {
+    const hasPermission = await Notifications.getPermissionsAsync();
+    if (hasPermission.status !== 'granted') {
+      await Notifications.requestPermissionsAsync();
+    }
+
+    Object.entries(prayerTimes).forEach(async ([prayer, time]) => {
+      const prayerDelay = delays[prayer] || 0;
+      const [hours, minutes] = time.split(':').map(Number);
+      const notificationTime = new Date();
+      notificationTime.setHours(hours, minutes, 0, 0);
+      notificationTime.setMinutes(notificationTime.getMinutes() + prayerDelay);
+
+      if (notificationTime > new Date()) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: `Time for ${prayer}`,
+            body: `This is your notification for ${prayer} prayer.`,
+            sound: true,
+          },
+          trigger: notificationTime,
+        });
+        console.log(`Scheduled notification for ${prayer} at ${notificationTime}`);
+      }
+    });
+
+    Alert.alert('Notifications Scheduled', 'Notifications have been scheduled for all prayers.');
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.header}>Prayer Times</Text>
+      {error ? (
+        <Text style={styles.error}>{error}</Text>
+      ) : (
+        <>
+          <FlatList
+            data={Object.entries(prayerTimes)}
+            keyExtractor={(item) => item[0]}
+            renderItem={({ item }) => (
+              <Text
+                style={[
+                  styles.item,
+                  selectedPrayer === item[0] && styles.selectedItem,
+                ]}
+                onPress={() => setSelectedPrayer(item[0])}
+              >
+                {item[0]}: {item[1]} (Delay: {delays[item[0]] || 0} min)
+              </Text>
+            )}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Enter delay in minutes"
+            value={delay}
+            onChangeText={setDelay}
+            keyboardType="numeric"
+          />
+          <Button title="Set Delay" onPress={setPrayerDelay} />
+          <Button title="Schedule Notifications" onPress={scheduleNotifications} />
+        </>
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#f0f4f8',
+  },
+  header: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+    color: '#34495e',
+  },
+  item: {
+    fontSize: 18,
+    marginVertical: 8,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#dcdfe6',
+    backgroundColor: '#ffffff',
+    textAlign: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  selectedItem: {
+    backgroundColor: '#e3f2fd',
+    borderColor: '#2196f3',
+  },
+  input: {
+    width: '100%',
+    height: 45,
+    borderColor: '#dcdfe6',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginVertical: 12,
+    backgroundColor: '#ffffff',
+    fontSize: 16,
+  },
+  error: {
+    color: '#e74c3c',
+    fontSize: 16,
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+});
 
 
 
@@ -1122,81 +1544,310 @@
 // Test app, a simple one
 
 
-import React from 'react';
-import { StyleSheet, Text, View, Button, Platform } from 'react-native';
-import * as Notifications from 'expo-notifications';
+// import React, { useEffect } from 'react';
+// import { StyleSheet, Text, View, Button, Platform } from 'react-native';
+// import * as Notifications from 'expo-notifications';
+// import * as Device from 'expo-device';
 
-// Configure notifications to display while the app is in the foreground
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+// // Configure notifications to display while the app is in the foreground
+// Notifications.setNotificationHandler({
+//   handleNotification: async () => ({
+//     shouldShowAlert: true,
+//     shouldPlaySound: true,
+//     shouldSetBadge: false,
+//   }),
+// });
 
-export default function App() {
-  // Request permission for notifications
-  const requestNotificationPermission = async () => {
-    const { status } = await Notifications.getPermissionsAsync();
-    if (status !== 'granted') {
-      const { status: newStatus } = await Notifications.requestPermissionsAsync();
-      if (newStatus !== 'granted') {
-        alert('Permission for notifications was not granted!');
-        return false;
-      }
-    }
-    return true;
-  };
+// export default function App() {
+//   useEffect(() => {
+//     if (Platform.OS === 'android') {
+//       // Create a custom notification channel for Android
+//       Notifications.setNotificationChannelAsync('custom-sound-channel', {
+//         name: 'Custom Sound Channel',
+//         importance: Notifications.AndroidImportance.HIGH,
+//         sound: 'mixkit-melodical-flute-music-notification-2310.wav', // Custom sound file
+//         vibrationPattern: [0, 250, 250, 250],
+//         lightColor: '#FF231F7C',
+//       });
+//     }
+//   }, []);
 
-  // Trigger a notification immediately
-  const sendNotification = async () => {
-    const hasPermission = await requestNotificationPermission();
-    if (!hasPermission) return;
+//   // Request permission for notifications
+//   const requestNotificationPermission = async () => {
+//     const { status } = await Notifications.getPermissionsAsync();
+//     if (status !== 'granted') {
+//       const { status: newStatus } = await Notifications.requestPermissionsAsync();
+//       if (newStatus !== 'granted') {
+//         alert('Permission for notifications was not granted!');
+//         return false;
+//       }
+//     }
+//     return true;
+//   };
 
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: 'Hello!',
-        body: 'This is your test notification.',
-        sound: 'mixkit-melodical-flute-music-notification-2310', // Ensure this matches the file name without extension
-      },
-      trigger: null, // Send immediately
-    });
-  };
+//   // Trigger a notification immediately
+//   const sendNotification = async () => {
+//     const hasPermission = await requestNotificationPermission();
+//     if (!hasPermission) return;
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Test Notifications</Text>
-      <Button title="Send Notification" onPress={sendNotification} />
-    </View>
-  );
-}
+//     await Notifications.scheduleNotificationAsync({
+//       content: {
+//         title: 'Custom Sound Notification!',
+//         body: 'This notification plays a custom sound.',
+//         sound: 'mixkit-melodical-flute-music-notification-2310.wav', // For iOS
+//       },
+//       trigger: null, // Send immediately
+//       android: {
+//         channelId: 'custom-sound-channel', // Use the custom channel
+//       },
+//     });
+//   };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-});
+//   return (
+//     <View style={styles.container}>
+//       <Text style={styles.header}>Custom Notification Sound</Text>
+//       <Button title="Notify Me Now" onPress={sendNotification} />
+//     </View>
+//   );
+// }
 
-
-
-
-
-
-
-
-
-
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     justifyContent: 'center',
+//     alignItems: 'center',
+//     backgroundColor: '#fff',
+//   },
+//   header: {
+//     fontSize: 24,
+//     fontWeight: 'bold',
+//     marginBottom: 20,
+//   },
+// });
 
 
+
+
+
+// import React, { useEffect } from 'react';
+// import { StyleSheet, Text, View, Button, Platform } from 'react-native';
+// import * as Notifications from 'expo-notifications';
+// import * as Device from 'expo-device';
+
+// Notifications.setNotificationHandler({
+//   handleNotification: async () => ({
+//     shouldShowAlert: true,
+//     shouldPlaySound: true,
+//     shouldSetBadge: false,
+//   }),
+// });
+
+// export default function App() {
+//   useEffect(() => {
+//     if (Platform.OS === 'android') {
+//       Notifications.setNotificationChannelAsync('custom-sound-channel', {
+//         name: 'Custom Sound Channel',
+//         importance: Notifications.AndroidImportance.HIGH,
+//         sound: 'mixkit-melodical-flute-music-notification-2310.wav', // Match exact filename
+//         vibrationPattern: [0, 250, 250, 250],
+//         lightColor: '#FF231F7C',
+//       });
+//     }
+//   }, []);
+
+//   const requestNotificationPermission = async () => {
+//     const { status } = await Notifications.getPermissionsAsync();
+//     if (status !== 'granted') {
+//       const { status: newStatus } = await Notifications.requestPermissionsAsync();
+//       if (newStatus !== 'granted') {
+//         alert('Permission for notifications was not granted!');
+//         return false;
+//       }
+//     }
+//     return true;
+//   };
+
+//   const sendNotification = async () => {
+//     const hasPermission = await requestNotificationPermission();
+//     if (!hasPermission) return;
+
+//     await Notifications.scheduleNotificationAsync({
+//       content: {
+//         title: 'Custom Sound Notification!',
+//         body: 'This notification plays a custom sound.',
+//         sound: 'mixkit-melodical-flute-music-notification-2310.wav', // Match exact filename
+//       },
+//       trigger: null,
+//       android: {
+//         channelId: 'custom-sound-channel',
+//         sound: 'mixkit-melodical-flute-music-notification-2310.wav', // Match exact filename
+//       },
+//     });
+//   };
+
+//   return (
+//     <View style={styles.container}>
+//       <Text style={styles.header}>Custom Notification Sound</Text>
+//       <Button title="Notify Me Now" onPress={sendNotification} />
+//     </View>
+//   );
+// }
+
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     justifyContent: 'center',
+//     alignItems: 'center',
+//     backgroundColor: '#fff',
+//   },
+//   header: {
+//     fontSize: 24,
+//     fontWeight: 'bold',
+//     marginBottom: 20,
+//   },
+// });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// test for the middle notification
+
+// import React, { useState } from 'react';
+// import { StyleSheet, Text, View, Button, Platform, Animated } from 'react-native';
+// import * as Notifications from 'expo-notifications';
+// import Modal from 'react-native-modal';
+
+// // Configure notifications to display while the app is in the foreground
+// Notifications.setNotificationHandler({
+//   handleNotification: async () => ({
+//     shouldShowAlert: false, // Don't show system alerts; we handle this with a custom modal
+//     shouldPlaySound: true,
+//     shouldSetBadge: false,
+//   }),
+// });
+
+// export default function App() {
+//   const [isModalVisible, setModalVisible] = useState(false);
+//   const [modalContent, setModalContent] = useState({ title: '', body: '' });
+
+//   // Request permission for notifications
+//   const requestNotificationPermission = async () => {
+//     const { status } = await Notifications.getPermissionsAsync();
+//     if (status !== 'granted') {
+//       const { status: newStatus } = await Notifications.requestPermissionsAsync();
+//       if (newStatus !== 'granted') {
+//         alert('Permission for notifications was not granted!');
+//         return false;
+//       }
+//     }
+//     return true;
+//   };
+
+//   // Trigger a notification
+//   const sendNotification = async () => {
+//     const hasPermission = await requestNotificationPermission();
+//     if (!hasPermission) return;
+
+//     const content = {
+//       title: 'Aggressive Alert!',
+//       body: 'This notification comes from the middle of the screen!',
+//     };
+
+//     // Display custom modal notification
+//     setModalContent(content);
+//     setModalVisible(true);
+
+//     // Optional: Schedule a system notification for background
+//     await Notifications.scheduleNotificationAsync({
+//       content: {
+//         title: 'Aggressive Alert!',
+//         body: 'This notification comes from the middle of the screen!',
+//         sound: 'mixkit-melodical-flute-music-notification-2310.wav', // Specify the custom sound
+//       },
+//       trigger: null, // Send immediately
+//     });
+    
+//   };
+
+//   return (
+//     <View style={styles.container}>
+//       <Text style={styles.header}>Aggressive Notifications</Text>
+//       <Button title="Send Notification" onPress={sendNotification} />
+
+//       {/* Custom Aggressive Modal */}
+//       <Modal
+//         isVisible={isModalVisible}
+//         animationIn="slideInUp" // Animations: slideInUp, bounce, etc.
+//         animationOut="slideOutDown"
+//         onBackdropPress={() => setModalVisible(false)} // Close on outside touch
+//       >
+//         <View style={styles.modalContainer}>
+//           <Text style={styles.modalTitle}>{modalContent.title}</Text>
+//           <Text style={styles.modalBody}>{modalContent.body}</Text>
+//           <Button title="Dismiss" onPress={() => setModalVisible(false)} />
+//         </View>
+//       </Modal>
+//     </View>
+//   );
+// }
+
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     justifyContent: 'center',
+//     alignItems: 'center',
+//     backgroundColor: '#fff',
+//   },
+//   header: {
+//     fontSize: 24,
+//     fontWeight: 'bold',
+//     marginBottom: 20,
+//   },
+//   modalContainer: {
+//     backgroundColor: '#fff',
+//     borderRadius: 10,
+//     padding: 20,
+//     alignItems: 'center',
+//     shadowColor: '#000',
+//     shadowOpacity: 0.2,
+//     shadowRadius: 10,
+//   },
+//   modalTitle: {
+//     fontSize: 20,
+//     fontWeight: 'bold',
+//     marginBottom: 10,
+//   },
+//   modalBody: {
+//     fontSize: 16,
+//     marginBottom: 20,
+//     textAlign: 'center',
+//   },
+// });
 
 
 
